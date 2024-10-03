@@ -1,0 +1,16 @@
+---
+- name: "Back configuration"
+  become: true
+  hosts:
+    - server
+  vars:
+    branch: "main"
+    app: "back"
+  roles:
+    - ufw
+    - php
+    #- composer
+    - mysql
+    - back
+    - nginx
+...

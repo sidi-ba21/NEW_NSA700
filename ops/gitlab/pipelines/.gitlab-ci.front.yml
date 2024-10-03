@@ -1,0 +1,60 @@
+front_build:
+  stage: build
+  image: dalil01/nsa-lsa-front:1.0.0
+  script:
+    - cd app/front/src/environments
+    - rm environment.prod.ts
+    - >
+      if [ "$CI_COMMIT_BRANCH" == "develop" ]; then
+        mv develop.ts environment.prod.ts
+      else
+        mv main.ts environment.prod.ts
+      fi
+    - cd ../../
+    - npm install
+    - npm run build:prod
+  artifacts:
+    paths:
+      - app/front/dist
+
+front_test:
+  stage: test
+  image: dalil01/nsa-lsa-front:1.0.0
+  dependencies:
+    - front_build
+  script:
+    - cd app/front
+    #- npm run test
+  artifacts:
+    paths:
+      - app/front/dist
+
+front_deploy_develop:
+  stage: deploy
+  dependencies:
+    - front_test
+  only:
+    - develop
+  image: alpinelinux/ansible:latest
+  script:
+    - apk add --no-cache sshpass
+    - ANSIBLE_PORT=$ANSIBLE_PORT
+    - ANSIBLE_USER=$ANSIBLE_USER
+    - ANSIBLE_SUDO_PASSWORD=$ANSIBLE_SUDO_PASSWORD
+    - CLIENT_HOST=$CLIENT_HOST
+    - ansible-playbook -i ops/ansible/inventory.yml ops/ansible/playbook-develop.front.yml
+
+front_deploy_main:
+  stage: deploy
+  dependencies:
+    - front_test
+  only:
+    - main
+  image: alpinelinux/ansible:latest
+  script:
+    - apk add --no-cache sshpass
+    - ANSIBLE_PORT=$ANSIBLE_PORT
+    - ANSIBLE_USER=$ANSIBLE_USER
+    - ANSIBLE_SUDO_PASSWORD=$ANSIBLE_SUDO_PASSWORD
+    - CLIENT_HOST=$CLIENT_HOST
+    - ansible-playbook -i ops/ansible/inventory.yml ops/ansible/playbook-main.front.yml

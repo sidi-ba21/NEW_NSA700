@@ -1,0 +1,28 @@
+---
+- name: "Install ufw"
+  apt:
+    name: ufw
+    state: present
+
+- name: "Activate ufw"
+  command: ufw --force enable
+
+- name: "Allow front http ports"
+  when: app == "front"
+  command: "ufw allow {{ item }}/tcp"
+  loop:
+    - 81
+    - 82
+
+- name: "Allow back http ports"
+  when: app == "back"
+  command: "ufw allow {{ item }}/tcp"
+  loop:
+    - 8081
+    - 8082
+
+- name: "Allow mysql ports"
+  command: "ufw allow 3306/tcp"
+
+- name: "Reload ufw"
+  command: ufw reload

@@ -1,0 +1,24 @@
+version: '3'
+
+services:
+    ansible:
+        build:
+            context: .
+            dockerfile: dockerfiles/ansible.Dockerfile
+        volumes:
+            - .:/ansible
+        command: tail -f /dev/null  # Keeps the container running so that Ansible commands can be executed
+        environment:
+            - EDITOR=nano
+        env_file:
+            - ../../.env
+
+    server:
+        build:
+            context: .
+            dockerfile: dockerfiles/server.Dockerfile
+
+    client:
+        build:
+            context: .
+            dockerfile: dockerfiles/client.Dockerfile

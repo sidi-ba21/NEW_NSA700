@@ -1,0 +1,60 @@
+back_build:
+  stage: build
+  image: dalil01/nsa-lsa-back:1.0.0
+  script:
+    - cd app/back
+    - rm -rf composer.lock
+    - composer install --no-scripts --optimize-autoloader
+  artifacts:
+    paths:
+      - app/back/vendor
+
+back_test:
+  stage: test
+  image: dalil01/nsa-lsa-back:1.0.0
+  dependencies:
+    - back_build
+  script:
+    - cd app/back
+    - cp .env.example .env
+    - php vendor/bin/phpunit
+
+back_deploy_develop:
+  stage: deploy
+  dependencies:
+    - back_test
+  only:
+    - develop
+  image: alpinelinux/ansible:latest
+  script:
+    - apk add --no-cache sshpass
+    - ANSIBLE_PORT=$ANSIBLE_PORT
+    - ANSIBLE_USER=$ANSIBLE_USER
+    - ANSIBLE_SUDO_PASSWORD=$ANSIBLE_SUDO_PASSWORD
+    - CLIENT_HOST=$CLIENT_HOST
+    - MYSQL_DATABASE=$MYSQL_DEVELOP_DATABASE
+    - MYSQL_USER=$MYSQL_USER
+    - MYSQL_PASSWORD=$MYSQL_PASSWORD
+    - MYSQL_HOST=$MYSQL_HOST
+    - MYSQL_PORT=$MYSQL_PORT
+    - ansible-playbook -i ops/ansible/inventory.yml ops/ansible/playbook-develop.back.yml
+
+back_deploy_main:
+  stage: deploy
+  dependencies:
+    - back_test
+  only:
+    - main
+  image: alpinelinux/ansible:latest
+  script:
+    - apk add --no-cache sshpass
+    - ANSIBLE_PORT=$ANSIBLE_PORT
+    - ANSIBLE_USER=$ANSIBLE_USER
+    - ANSIBLE_SUDO_PASSWORD=$ANSIBLE_SUDO_PASSWORD
+    - CLIENT_HOST=$CLIENT_HOST
+    - MYSQL_DATABASE=$MYSQL_DATABASE
+    - MYSQL_USER=$MYSQL_USER
+    - MYSQL_PASSWORD=$MYSQL_PASSWORD
+    - MYSQL_HOST=$MYSQL_HOST
+    - MYSQL_PORT=$MYSQL_PORT
+    - ansible-playbook -i ops/ansible/inventory.yml ops/ansible/playbook-main.back.yml

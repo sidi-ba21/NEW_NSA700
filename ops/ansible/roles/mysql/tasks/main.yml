@@ -1,0 +1,45 @@
+---
+- name: Install MySQL
+  apt:
+    name:
+      - mariadb-server
+      - mariadb-client
+      - python3-pymysql
+    state: latest
+
+- name: "Start MariaDB"
+  service: name=mariadb enabled=true state=started
+
+- name: "Removes all anonymous user accounts"
+  mysql_user:
+    name: ''
+    host: all
+    state: absent
+    login_unix_socket: /run/mysqld/mysqld.sock
+
+- name: "Create user {{ mysql_user }} with all privileges"
+  mysql_user:
+    name: "{{ ansible_mysql_user }}"
+    password: "{{ ansible_mysql_password }}"
+    host: "{{ ansible_mysql_host }}"
+    login_unix_socket: /run/mysqld/mysqld.sock
+    priv: "*.*:ALL,GRANT"
+    state: present
+
+- name: "Create database {{ ansible_mysql_db }}"
+  mysql_db:
+    name: "{{ ansible_mysql_db }}"
+    state: present
+    login_unix_socket: /run/mysqld/mysqld.sock
+
+- name: Set bind-address in MariaDB configuration
+  lineinfile:
+    path: /etc/mysql/mariadb.conf.d/50-server.cnf
+    regexp: '^bind-address\s*='
+    line: 'bind-address = 0.0.0.0'
+    state: present
+
+- name: "Restart MariaDB"
+  command: service mysql restart
+  args:
+    warn: false

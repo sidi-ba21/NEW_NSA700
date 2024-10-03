@@ -1,0 +1,13 @@
+---
+- name: "Front configuration"
+  become: true
+  hosts:
+    - client
+  vars:
+    branch: "develop"
+    app: "front"
+  roles:
+    - ufw
+    - front
+    - nginx
+...

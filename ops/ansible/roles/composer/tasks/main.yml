@@ -1,0 +1,14 @@
+---
+- name: "Run Composer installer"
+  command: php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+
+- name: "Verify downloaded installer"
+  command: php composer-setup.php --check
+
+- name: "Run Composer setup"
+  command: php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+
+- name: "Clean up downloaded installer"
+  command: rm composer-setup.php
+  args:
+    warn: false

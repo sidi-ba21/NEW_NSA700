@@ -1,0 +1,23 @@
+server {
+    listen 81;
+    server_name 195.35.48.81;
+
+    root /var/www/nsa-lsa/main/front;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+
+server {
+    listen 82;
+    server_name 195.35.48.81;
+
+    root /var/www/nsa-lsa/develop/front;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

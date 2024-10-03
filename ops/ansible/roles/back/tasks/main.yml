@@ -1,0 +1,146 @@
+---
+- name: "Copy dist to directory"
+  when: branch == "develop"
+  copy:
+    src: "{{ dist_path }}"
+    dest: "{{ project_path }}/develop/_back"
+
+- name: "Copy dist to directory"
+  when: branch == "main"
+  copy:
+    src: "{{ dist_path }}"
+    dest: "{{ project_path }}/main/_back"
+
+# ---------------------------------------------------------------------------- #
+
+- name: "Create .env"
+  when: branch == "develop"
+  copy:
+    src: templates/env.develop.j2
+    dest: "{{ project_path }}/develop/_back/.env"
+
+- name: "Update config .env"
+  when: branch == "develop"
+  lineinfile:
+    path: "{{ project_path }}/develop/_back/.env"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  with_items:
+    - { regexp: '^DB_DATABASE=', line: 'DB_DATABASE={{ ansible_mysql_db }}' }
+    - { regexp: '^DB_USERNAME=', line: 'DB_USERNAME={{ ansible_mysql_user }}' }
+    - { regexp: '^DB_PASSWORD=', line: 'DB_PASSWORD={{ ansible_mysql_password }}' }
+    - { regexp: '^DB_HOST=', line: 'DB_HOST={{ ansible_mysql_host }}' }
+    - { regexp: '^DB_PORT=', line: 'DB_PORT={{ ansible_mysql_port }}' }
+
+- name: "Create .env"
+  when: branch == "main"
+  copy:
+    src: templates/env.main.j2
+    dest: "{{ project_path }}/main/_back/.env"
+
+- name: "Update config .env"
+  when: branch == "main"
+  lineinfile:
+    path: "{{ project_path }}/main/_back/.env"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  with_items:
+    - { regexp: '^DB_DATABASE=', line: 'DB_DATABASE={{ ansible_mysql_db }}' }
+    - { regexp: '^DB_USERNAME=', line: 'DB_USERNAME={{ ansible_mysql_user }}' }
+    - { regexp: '^DB_PASSWORD=', line: 'DB_PASSWORD={{ ansible_mysql_password }}' }
+    - { regexp: '^DB_HOST=', line: 'DB_HOST={{ ansible_mysql_host }}' }
+    - { regexp: '^DB_PORT=', line: 'DB_PORT={{ ansible_mysql_port }}' }
+
+
+# ---------------------------------------------------------------------------- #
+
+- name: "Remove composer.lock"
+  when: branch == "develop"
+  command: "rm {{ project_path }}/develop/_back/composer.lock"
+  args:
+    warn: false
+
+- name: "Remove composer.lock"
+  when: branch == "main"
+  command: "rm {{ project_path }}/main/_back/composer.lock"
+  args:
+    warn: false
+
+# ---------------------------------------------------------------------------- #
+
+- name: "Give rights for develop branch"
+  when: branch == "develop"
+  file:
+    path: "{{ project_path }}/develop/_back"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    recurse: yes
+
+- name: "Give rights for main branch"
+  when: branch == "main"
+  file:
+    path: "{{ project_path }}/main/_back"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    recurse: yes
+
+# ---------------------------------------------------------------------------- #
+
+- name: "Install dependencies"
+  when: branch == "develop"
+  become: false
+  command: composer install --no-scripts --optimize-autoloader --no-dev
+  args:
+    chdir: "{{ project_path }}/develop/_back"
+
+- name: "Install dependencies"
+  when: branch == "main"
+  become: false
+  command: composer install --no-scripts --optimize-autoloader --no-dev
+  args:
+    chdir: "{{ project_path }}/main/_back"
+
+# ---------------------------------------------------------------------------- #
+
+- name: "Run migrations"
+  when: branch == "develop"
+  command: php artisan migrate --force
+  args:
+    chdir: "{{ project_path }}/develop/_back"
+
+- name: "Run migrations"
+  when: branch == "main"
+  command: php artisan migrate --force
+  args:
+    chdir: "{{ project_path }}/main/_back"
+
+# ---------------------------------------------------------------------------- #
+
+- name: "Remove current deployment"
+  when: branch == "develop"
+  command: "rm -rf {{ project_path }}/develop/back"
+  args:
+    warn: false
+
+- name: "Remove current deployment"
+  when: branch == "main"
+  command: "rm -rf {{ project_path }}/main/back"
+  args:
+    warn: false
+
+# ---------------------------------------------------------------------------- #
+
+- name: "Rename dist directory"
+  when: branch == "develop"
+  command: "mv {{ project_path }}/develop/_back {{ project_path }}/develop/back"
+
+- name: "Rename dist directory"
+  when: branch == "main"
+  command: "mv {{ project_path }}/main/_back {{ project_path }}/main/back"
+
+# ---------------------------------------------------------------------------- #
+
+- name: "Give rights"
+  command: chown -R www-data:www-data /var/www/nsa-lsa

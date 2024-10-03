@@ -1,0 +1,3 @@
+sites_enabled_path: /etc/nginx/sites-enabled
+front_config_file: nsa-lsa-front.conf
+back_config_file: nsa-lsa-back.conf

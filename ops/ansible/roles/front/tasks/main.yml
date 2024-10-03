@@ -1,0 +1,41 @@
+---
+- name: "Copy dist to directory"
+  when: branch == "develop"
+  copy:
+    src: "{{ dist_path }}"
+    dest: "{{ project_path }}/develop/_front"
+
+- name: "Copy dist to directory"
+  when: branch == "main"
+  copy:
+    src: "{{ dist_path }}"
+    dest: "{{ project_path }}/main/_front"
+
+# ---------------------------------------------------------------------------- #
+
+- name: "Remove current deployment"
+  when: branch == "develop"
+  command: "rm -rf {{ project_path }}/develop/front"
+  args:
+    warn: false
+
+- name: "Remove current deployment"
+  when: branch == "main"
+  command: "rm -rf {{ project_path }}/main/front"
+  args:
+    warn: false
+
+# ---------------------------------------------------------------------------- #
+
+- name: "Rename dist directory"
+  when: branch == "develop"
+  command: "mv {{ project_path }}/develop/_front {{ project_path }}/develop/front"
+
+- name: "Rename dist directory"
+  when: branch == "main"
+  command: "mv {{ project_path }}/main/_front {{ project_path }}/main/front"
+
+# ---------------------------------------------------------------------------- #
+
+- name: "Give rights"
+  command: chown -R www-data:www-data /var/www/nsa-lsa
