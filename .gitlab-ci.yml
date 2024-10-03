@@ -1,0 +1,13 @@
+stages:
+  - build
+  - test
+  - deploy
+
+cache:
+  paths:
+    - app/front/node_modules
+    - app/app/back/vendor
+
+include:
+  - "/ops/gitlab/pipelines/.gitlab-ci.back.yml"
+  - "/ops/gitlab/pipelines/.gitlab-ci.front.yml"
